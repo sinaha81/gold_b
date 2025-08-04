@@ -174,7 +174,7 @@
       color: var(--primary-text);
       border-color: var(--accent-teal);
     }
-    .secondary-button:disabled {
+    .main-button:disabled, .secondary-button:disabled {
       cursor: not-allowed;
       opacity: 0.6;
     }
@@ -339,6 +339,35 @@
       border-color: var(--accent-purple-dark);
       color: #fff;
     }
+
+    /* Mobile Responsiveness */
+    @media (max-width: 768px) {
+      body {
+        padding: 20px 10px;
+      }
+      header {
+        padding-top: 50px; /* Make space for the icon */
+      }
+      header h1 {
+        font-size: 2rem;
+      }
+      #settings-icon {
+        top: 15px;
+        left: 15px;
+      }
+      .main-grid {
+        grid-template-columns: 1fr; /* Stack cards vertically */
+      }
+      .card {
+        padding: 16px;
+      }
+      .button-group {
+        flex-direction: column;
+      }
+      .bar-chart-container {
+        height: 220px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -463,6 +492,14 @@
           <label for="unit-rial">ریال</label>
         </div>
       </div>
+       <div class="input-group" id="install-pwa-container">
+            <label>نصب اپلیکیشن</label>
+            <button class="main-button secondary-button" id="install-pwa-button" disabled>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
+                <span id="install-pwa-text">نصب اپلیکیشن (غیرفعال)</span>
+            </button>
+            <p class="input-description">اپلیکیشن را برای دسترسی سریع‌تر روی دستگاه خود نصب کنید.</p>
+        </div>
        <div class="input-group">
             <label>مدیریت داده‌ها</label>
             <button class="main-button danger-button" id="clear-cache-button">پاک کردن حافظه پنهان (Cache)</button>
@@ -576,6 +613,9 @@
   const analyzeButton = document.getElementById('analyze-button');
   const autoFillButton = document.getElementById('auto-fill-button');
   const clearCacheButton = document.getElementById('clear-cache-button');
+  const installPwaButton = document.getElementById('install-pwa-button');
+  const installPwaText = document.getElementById('install-pwa-text');
+
 
   // --- State ---
   let settings = {
@@ -583,6 +623,8 @@
     coinCommission: 0,
     currencyUnit: 'toman'
   };
+  let deferredPrompt = null;
+
 
   // --- Helpers ---
   const getCssVar = (varName) => getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
@@ -864,6 +906,23 @@
         return englishNumbers.replace(/[^0-9.]/g, '');
     }
 
+    async function fetchWithProxies(targetUrl) {
+        for (const proxy of CORS_PROXIES) {
+            const url = proxy + targetUrl;
+            try {
+                const response = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                if (response.ok) {
+                    const text = await response.text();
+                    if (text) return text;
+                }
+                throw new Error(`Proxy ${proxy} failed with status: ${response.status}`);
+            } catch (error) {
+                console.warn(error);
+            }
+        }
+        throw new Error('All proxies failed.');
+    }
+
     async function fetchAndFillData() {
         const buttonText = autoFillButton.querySelector('.button-text');
         const spinner = autoFillButton.querySelector('.spinner');
@@ -873,51 +932,36 @@
         spinner.classList.remove('hidden');
         errorMessageEl.classList.add('hidden');
 
-        let success = false;
-        for (const proxy of CORS_PROXIES) {
-            const url = proxy + 'https://chandshode.com/';
-            try {
-                const response = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-                if (!response.ok) throw new Error(`Proxy failed with status: ${response.status}`);
-                
-                const htmlText = await response.text();
-                if (!htmlText) throw new Error("Empty response from proxy.");
+        try {
+            const htmlText = await fetchWithProxies('https://chandshode.com/');
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlText, 'text/html');
 
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(htmlText, 'text/html');
+            const ouncePrice = cleanPriceString(doc.querySelector('#gold-card-3 .price')?.textContent);
+            const usdRate = cleanPriceString(doc.querySelector('#currency-card-1 .price')?.textContent);
+            const bullionMarketPrice = cleanPriceString(doc.querySelector('#gold-card-1 .price')?.textContent);
+            const gold18kMarketPrice = cleanPriceString(doc.querySelector('#gold-card-0 .price')?.textContent);
+            const coinMarketPrice = cleanPriceString(doc.querySelector('#gold-card-8 .price')?.textContent);
 
-                const ouncePrice = cleanPriceString(doc.querySelector('#gold-card-3 .price')?.textContent);
-                const usdRate = cleanPriceString(doc.querySelector('#currency-card-1 .price')?.textContent);
-                const bullionMarketPrice = cleanPriceString(doc.querySelector('#gold-card-1 .price')?.textContent);
-                const gold18kMarketPrice = cleanPriceString(doc.querySelector('#gold-card-0 .price')?.textContent);
-                const coinMarketPrice = cleanPriceString(doc.querySelector('#gold-card-8 .price')?.textContent);
-
-                if(!ouncePrice || !usdRate || !bullionMarketPrice || !gold18kMarketPrice || !coinMarketPrice) {
-                    throw new Error("Failed to parse data from HTML.");
-                }
-
-                updateInputValue(inputs.ouncePrice, ouncePrice);
-                updateInputValue(inputs.usdRate, usdRate);
-                updateInputValue(inputs.bullionMarketPrice, bullionMarketPrice);
-                updateInputValue(inputs.gold18kMarketPrice, gold18kMarketPrice);
-                updateInputValue(inputs.coinMarketPrice, coinMarketPrice);
-                
-                success = true;
-                break; // Exit loop on success
-            } catch (error) {
-                console.warn(`Proxy ${proxy} failed:`, error);
-                // Continue to the next proxy
+            if (!ouncePrice || !usdRate || !bullionMarketPrice || !gold18kMarketPrice || !coinMarketPrice) {
+                throw new Error("Failed to parse data from HTML.");
             }
-        }
 
-        if (!success) {
-            errorMessageEl.textContent = 'خطا در دریافت اطلاعات. لطفاً همه پراکسی ها از کار افتاده اند، بعداً تلاش کنید.';
+            updateInputValue(inputs.ouncePrice, ouncePrice);
+            updateInputValue(inputs.usdRate, usdRate);
+            updateInputValue(inputs.bullionMarketPrice, bullionMarketPrice);
+            updateInputValue(inputs.gold18kMarketPrice, gold18kMarketPrice);
+            updateInputValue(inputs.coinMarketPrice, coinMarketPrice);
+
+        } catch (error) {
+            console.error('Failed to fetch data:', error);
+            errorMessageEl.textContent = 'خطا در دریافت اطلاعات. همه پراکسی ها از کار افتاده اند، بعداً تلاش کنید.';
             errorMessageEl.classList.remove('hidden');
+        } finally {
+            autoFillButton.disabled = false;
+            buttonText.classList.remove('hidden');
+            spinner.classList.add('hidden');
         }
-
-        autoFillButton.disabled = false;
-        buttonText.classList.remove('hidden');
-        spinner.classList.add('hidden');
     }
 
     function updateInputValue(inputElement, value) {
@@ -954,6 +998,32 @@
           });
       });
     }
+
+    // PWA Install Prompt Logic
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        installPwaButton.disabled = false;
+        installPwaText.textContent = 'نصب اپلیکیشن';
+    });
+
+    installPwaButton.addEventListener('click', async () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log(`User response to the install prompt: ${outcome}`);
+            deferredPrompt = null;
+            installPwaButton.disabled = true;
+            installPwaText.textContent = 'نصب شد';
+        }
+    });
+
+    window.addEventListener('appinstalled', () => {
+        console.log('PWA was installed');
+        installPwaButton.disabled = true;
+        installPwaText.textContent = 'نصب شد';
+        deferredPrompt = null;
+    });
 
     setupSettingsModal();
     loadSettings();
