@@ -3,6 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- PWA Manifest and Theme Color -->
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#0a0f1f">
+
   <title>داشبورد پیشرفته تحلیل طلا</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -531,8 +536,8 @@
   const CORS_PROXIES = [
       'https://api.allorigins.win/raw?url=',
       'https://corsproxy.io/?',
-      'https://proxy.cors.sh/',
-      'https://api.codetabs.com/v1/proxy/?quest='
+      'https://api.codetabs.com/v1/proxy/?quest=',
+      'https://thingproxy.freeboard.io/fetch/'
   ];
   
   // --- Chart.js Global Config ---
@@ -821,10 +826,11 @@
                       const { chart, dataIndex } = context;
                       const { ctx, chartArea } = chart;
                       if (!chartArea) return;
-                      if (dataIndex === 0) {
+                      // Color based on the logic: Red for Negative Bubble, Green for Positive
+                      if (dataIndex === 0) { // Intrinsic value part
+                          return createGradient(ctx, chartArea, isPositive ? getCssVar('--green-positive-dark') : getCssVar('--red-dark'), isPositive ? getCssVar('--green-positive') : getCssVar('--red'));
+                      } else { // Bubble part
                           return createGradient(ctx, chartArea, getCssVar('--green-positive-dark'), getCssVar('--green-positive'));
-                      } else {
-                          return createGradient(ctx, chartArea, getCssVar('--red-dark'), getCssVar('--red'));
                       }
                   },
                   borderColor: getCssVar('--card-bg'),
@@ -905,7 +911,7 @@
         }
 
         if (!success) {
-            errorMessageEl.textContent = 'خطا در دریافت اطلاعات. لطفاً اتصال اینترنت خود را بررسی کرده و مجدد تلاش کنید.';
+            errorMessageEl.textContent = 'خطا در دریافت اطلاعات. لطفاً همه پراکسی ها از کار افتاده اند، بعداً تلاش کنید.';
             errorMessageEl.classList.remove('hidden');
         }
 
@@ -936,6 +942,18 @@
             }
         });
     });
+
+    // PWA Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js')
+          .then(registration => {
+            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+          }, err => {
+            console.log('ServiceWorker registration failed: ', err);
+          });
+      });
+    }
 
     setupSettingsModal();
     loadSettings();
