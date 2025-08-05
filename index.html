@@ -235,7 +235,7 @@
         font-size: 1.1rem;
     }
     .bubble-item .label { color: var(--secondary-text); }
-    .bubble-item .value { font-weight: 700; direction: ltr; }
+    .bubble-item .value { font-weight: 700; direction: ltr; transition: color 0.5s ease; }
     .bubble-item .value.positive { color: var(--green-positive); }
     .bubble-item .value.negative { color: var(--red); }
 
@@ -516,7 +516,7 @@
             <label>نصب اپلیکیشن</label>
             <button class="main-button secondary-button" id="install-pwa-button">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
-                <span id="install-pwa-text"></span>
+                <span id="install-pwa-text">نصب اپلیکیشن</span>
             </button>
             <p class="input-description">اپلیکیشن را برای دسترسی سریع‌تر روی دستگاه خود نصب کنید.</p>
         </div>
@@ -665,6 +665,7 @@
     currencyUnit: 'toman'
   };
   let deferredPrompt = null;
+  let previousAnalysisData = {};
 
 
   // --- Helpers ---
@@ -677,6 +678,25 @@
   const showCards = () => Object.values(cards).forEach(card => card.classList.remove('hidden'));
   const hideCards = () => Object.values(cards).forEach(card => card.classList.add('hidden'));
   const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+  // --- Animation Helper ---
+  function animateValue(element, start, end, duration = 500, formatter) {
+      if (start === end) {
+          element.innerHTML = formatter(end);
+          return;
+      }
+      let startTimestamp = null;
+      const step = (timestamp) => {
+          if (!startTimestamp) startTimestamp = timestamp;
+          const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+          const current = Math.floor(progress * (end - start) + start);
+          element.innerHTML = formatter(current);
+          if (progress < 1) {
+              window.requestAnimationFrame(step);
+          }
+      };
+      window.requestAnimationFrame(step);
+  }
   
   // --- LocalStorage Functions ---
   function saveSettings() {
@@ -798,10 +818,12 @@
     const usdDiff18k = usdIn18k - values.usdRate;
     
     const currency = `<span class="currency-unit">${settings.currencyUnit === 'toman' ? 'ت' : 'ر'}</span>`;
-    document.getElementById('res-usd-free').innerHTML = `${formatNumber(values.usdRate)} ${currency}`;
-    document.getElementById('res-usd-bullion').innerHTML = `${formatNumber(usdInBullion)} ${currency}`;
-    document.getElementById('res-usd-18k').innerHTML = `${formatNumber(usdIn18k)} ${currency}`;
     
+    const numberFormatter = (val) => `${formatNumber(val)} ${currency}`;
+    animateValue(document.getElementById('res-usd-free'), previousAnalysisData.usdRate || 0, values.usdRate, 500, numberFormatter);
+    animateValue(document.getElementById('res-usd-bullion'), previousAnalysisData.usdInBullion || 0, usdInBullion, 500, numberFormatter);
+    animateValue(document.getElementById('res-usd-18k'), previousAnalysisData.usdIn18k || 0, usdIn18k, 500, numberFormatter);
+
     document.getElementById('dollar-conclusion').textContent = `نتیجه: دلار در طلا ۲۴ عیار ${usdDiffBullion >= 0 ? 'گران‌تر' : 'ارزان‌تر'} و در طلای ۱۸ عیار ${usdDiff18k >= 0 ? 'گران‌تر' : 'ارزان‌تر'} از دلار بازار آزاد است.`;
     
     // Update bubble summary
@@ -818,6 +840,10 @@
     const chartData = [values.usdRate, usdInBullion, usdIn18k];
     destroyChart('dollarBarChart');
     initDollarBarChart(chartData);
+
+    previousAnalysisData.usdRate = values.usdRate;
+    previousAnalysisData.usdInBullion = usdInBullion;
+    previousAnalysisData.usdIn18k = usdIn18k;
   }
   
   function updateBubbleCard(type, marketPrice, intrinsicValue) {
@@ -825,14 +851,18 @@
       const bubblePercent = (intrinsicValue > 0) ? (bubbleAmount / intrinsicValue) * 100 : 0;
       const currency = `<span class="currency-unit">${settings.currencyUnit === 'toman' ? 'تومان' : 'ریال'}</span>`;
       
-      document.getElementById(`res-${type}-market`).innerHTML = `${formatNumber(marketPrice)} ${currency}`;
-      document.getElementById(`res-${type}-intrinsic`).innerHTML = `${formatNumber(intrinsicValue)} ${currency}`;
+      const numberFormatter = (val) => `${formatNumber(val)} ${currency}`;
+      animateValue(document.getElementById(`res-${type}-market`), previousAnalysisData[`${type}_market`] || 0, marketPrice, 500, numberFormatter);
+      animateValue(document.getElementById(`res-${type}-intrinsic`), previousAnalysisData[`${type}_intrinsic`] || 0, intrinsicValue, 500, numberFormatter);
 
       const chartData = [intrinsicValue, bubbleAmount >= 0 ? Math.abs(bubbleAmount) : 0];
       const chartCanvasId = `${type.replace('-', '')}DonutChart`;
       
       destroyChart(chartCanvasId);
       initDonutChart(type, chartData, bubblePercent);
+
+      previousAnalysisData[`${type}_market`] = marketPrice;
+      previousAnalysisData[`${type}_intrinsic`] = intrinsicValue;
   }
 
   // --- Chart Initializations ---
@@ -1075,14 +1105,21 @@
     
     // Initial PWA button state
     if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
-        // App is already installed and running in standalone mode
-        installPwaButton.parentElement.classList.add('hidden');
-    } else if (isIOS()) {
-        installPwaButton.disabled = false;
-        installPwaText.textContent = 'راهنمای نصب برای آیفون';
+        document.getElementById('install-pwa-container').classList.add('hidden');
     } else {
         installPwaButton.disabled = true;
-        installPwaText.textContent = 'نصب (غیرفعال)';
+        if (isIOS()) {
+            installPwaButton.disabled = false;
+            installPwaText.textContent = 'راهنمای نصب برای آیفون';
+        } else {
+             installPwaText.textContent = 'نصب (غیرفعال)';
+        }
+    }
+
+    // Handle App Shortcut Action
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('action') === 'autofill') {
+        fetchAndFillData();
     }
 
     setupSettingsModal();

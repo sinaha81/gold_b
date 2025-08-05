@@ -1,0 +1,32 @@
+{
+  "name": "داشبورد پیشرفته تحلیل طلا",
+  "short_name": "تحلیل طلا",
+  "description": "تحلیل جامع قیمت و حباب در بازار طلا و ارز",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a0f1f",
+  "theme_color": "#0a0f1f",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "./icon.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "./icon.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "به‌روزرسانی خودکار قیمت‌ها",
+      "short_name": "بروزرسانی",
+      "description": "باز کردن اپ و دریافت آخرین قیمت‌ها به صورت خودکار",
+      "url": "./index.html?action=autofill",
+      "icons": [{ "src": "./icon.png", "sizes": "192x192" }]
+    }
+  ]
+}
