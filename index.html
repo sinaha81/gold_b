@@ -261,7 +261,7 @@
     .hidden { display: none !important; }
     #error-message { color: var(--red); text-align: center; margin-top: 10px; }
     
-    /* Settings Modal Styles */
+    /* Settings & iOS Modal Styles */
     #settings-icon {
       position: absolute;
       top: 10px;
@@ -326,6 +326,26 @@
     }
     .modal-close:hover { color: var(--primary-text); }
     .modal-body .input-group { margin-bottom: 20px; }
+    
+    #ios-install-instructions {
+        text-align: center;
+    }
+    #ios-install-instructions p {
+        font-size: 1.1rem;
+        margin-bottom: 20px;
+    }
+    #ios-install-instructions .icon-row {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 15px;
+        font-size: 1.2rem;
+    }
+    #ios-install-instructions .icon-row svg {
+        width: 32px;
+        height: 32px;
+        fill: var(--primary-text);
+    }
 
     .radio-group { display: flex; gap: 15px; }
     .radio-group label {
@@ -494,9 +514,9 @@
       </div>
        <div class="input-group" id="install-pwa-container">
             <label>نصب اپلیکیشن</label>
-            <button class="main-button secondary-button" id="install-pwa-button" disabled>
+            <button class="main-button secondary-button" id="install-pwa-button">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
-                <span id="install-pwa-text">نصب اپلیکیشن (غیرفعال)</span>
+                <span id="install-pwa-text"></span>
             </button>
             <p class="input-description">اپلیکیشن را برای دسترسی سریع‌تر روی دستگاه خود نصب کنید.</p>
         </div>
@@ -509,6 +529,27 @@
   </div>
 </div>
 
+<!-- iOS Install Instructions Modal -->
+<div class="modal-overlay" id="ios-install-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>راهنمای نصب در iOS</h3>
+            <span class="modal-close" id="ios-modal-close-btn">×</span>
+        </div>
+        <div class="modal-body" id="ios-install-instructions">
+            <p>برای نصب اپلیکیشن، مراحل زیر را دنبال کنید:</p>
+            <div class="icon-row">
+                <span>۱. دکمه Share را بزنید</span>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50"><path d="M 25 4 C 25.552 4 26 4.448 26 5 L 26 26.585938 L 29.292969 23.292969 C 29.683969 22.901969 30.316031 22.901969 30.707031 23.292969 C 31.098031 23.683969 31.098031 24.316031 30.707031 24.707031 L 25.707031 29.707031 C 25.316031 30.098031 24.683969 30.098031 24.292969 29.707031 L 19.292969 24.707031 C 18.901969 24.316031 18.901969 23.683969 19.292969 23.292969 C 19.683969 22.901969 20.316031 22.901969 20.707031 23.292969 L 24 26.585938 L 24 5 C 24 4.448 24.448 4 25 4 z M 8 13 C 6.895 13 6 13.895 6 15 L 6 39 C 6 40.105 6.895 41 8 41 L 42 41 C 43.105 41 44 40.105 44 39 L 44 15 C 44 13.895 43.105 13 42 13 L 36 13 L 36 15 L 42 15 L 42 39 L 8 39 L 8 15 L 14 15 L 14 13 L 8 13 z"/></svg>
+            </div>
+            <p>↓</p>
+            <div class="icon-row">
+                <span>۲. گزینه Add to Home Screen را انتخاب کنید</span>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50"><path d="M 24 4 C 23.447 4 23 4.447 23 5 L 23 20 L 21 20 C 20.447 20 20 20.447 20 21 C 20 21.553 20.447 22 21 22 L 23 22 L 23 37 C 23 37.553 23.447 38 24 38 C 24.553 38 25 37.553 25 37 L 25 22 L 27 22 C 27.553 22 28 21.553 28 21 C 28 20.447 27.553 20 27 20 L 25 20 L 25 5 C 25 4.447 24.553 4 24 4 z M 9 9 C 7.345 9 6 10.345 6 12 L 6 40 C 6 41.655 7.345 43 9 43 L 41 43 C 42.655 43 44 41.655 44 40 L 44 12 C 44 10.345 42.655 9 41 9 L 9 9 z M 9 11 L 41 11 C 41.551 11 42 11.449 42 12 L 42 40 C 42 40.551 41.551 41 41 41 L 9 41 C 8.449 41 8 40.551 8 40 L 8 12 C 8 11.449 8.449 11 9 11 z"/></svg>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
   // --- Dynamic Background Script ---
@@ -615,7 +656,7 @@
   const clearCacheButton = document.getElementById('clear-cache-button');
   const installPwaButton = document.getElementById('install-pwa-button');
   const installPwaText = document.getElementById('install-pwa-text');
-
+  const iosInstallModal = document.getElementById('ios-install-modal');
 
   // --- State ---
   let settings = {
@@ -635,6 +676,7 @@
   const parseInput = (value) => parseFloat(String(value).replace(/,/g, ''));
   const showCards = () => Object.values(cards).forEach(card => card.classList.remove('hidden'));
   const hideCards = () => Object.values(cards).forEach(card => card.classList.add('hidden'));
+  const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
   
   // --- LocalStorage Functions ---
   function saveSettings() {
@@ -680,6 +722,11 @@
     document.getElementById('modal-close-btn').addEventListener('click', () => settingsModal.classList.remove('visible'));
     settingsModal.addEventListener('click', (e) => {
         if (e.target === settingsModal) settingsModal.classList.remove('visible');
+    });
+    
+    document.getElementById('ios-modal-close-btn').addEventListener('click', () => iosInstallModal.classList.remove('visible'));
+    iosInstallModal.addEventListener('click', (e) => {
+        if (e.target === iosInstallModal) iosInstallModal.classList.remove('visible');
     });
     
     commissionRateInput.addEventListener('change', (e) => {
@@ -868,10 +915,9 @@
                       const { chart, dataIndex } = context;
                       const { ctx, chartArea } = chart;
                       if (!chartArea) return;
-                      // Color based on the logic: Red for Negative Bubble, Green for Positive
-                      if (dataIndex === 0) { // Intrinsic value part
+                      if (dataIndex === 0) {
                           return createGradient(ctx, chartArea, isPositive ? getCssVar('--green-positive-dark') : getCssVar('--red-dark'), isPositive ? getCssVar('--green-positive') : getCssVar('--red'));
-                      } else { // Bubble part
+                      } else {
                           return createGradient(ctx, chartArea, getCssVar('--green-positive-dark'), getCssVar('--green-positive'));
                       }
                   },
@@ -1006,7 +1052,7 @@
         installPwaButton.disabled = false;
         installPwaText.textContent = 'نصب اپلیکیشن';
     });
-
+    
     installPwaButton.addEventListener('click', async () => {
         if (deferredPrompt) {
             deferredPrompt.prompt();
@@ -1015,6 +1061,8 @@
             deferredPrompt = null;
             installPwaButton.disabled = true;
             installPwaText.textContent = 'نصب شد';
+        } else if (isIOS()) {
+            iosInstallModal.classList.add('visible');
         }
     });
 
@@ -1024,6 +1072,18 @@
         installPwaText.textContent = 'نصب شد';
         deferredPrompt = null;
     });
+    
+    // Initial PWA button state
+    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+        // App is already installed and running in standalone mode
+        installPwaButton.parentElement.classList.add('hidden');
+    } else if (isIOS()) {
+        installPwaButton.disabled = false;
+        installPwaText.textContent = 'راهنمای نصب برای آیفون';
+    } else {
+        installPwaButton.disabled = true;
+        installPwaText.textContent = 'نصب (غیرفعال)';
+    }
 
     setupSettingsModal();
     loadSettings();
